@@ -1,0 +1,48 @@
+
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+env:
+  DISPLAY: ':99'
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_dispatch:
+  push:
+    branches: [ 'master' ]
+  pull_request:
+    branches: [ 'master' ]
+#  schedule:
+#    - cron: "0 */12 * * *"
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  window-build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+    
+      - uses: msys2/setup-msys2@v2
+        with:
+          install: mingw-w64-x86_64-toolchain mingw-w64-x86_64-qt5-webview
+          msystem: mingw64
+          release: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.9
+        with:
+          cmake-version: '3.20.x'
+
+      - name: Build
+        run: |
+            mkdir qt5-build
+            cd qt5-build
+            ..\\qt5\configure -developer-build -opensource -nomake examples -nomake tests
+            make -j8
